@@ -23,10 +23,10 @@ Instead of using a single model across all phases, **SDD Orchestrator gives you 
 
 ```bash
 # One-line install
-curl -fsSL https://raw.githubusercontent.com/mrueda/sdd-orchestrator-skill/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mikewarrior/sdd-orchestrator-skill/main/install.sh | bash
 
 # Or clone and run
-git clone https://github.com/mrueda/sdd-orchestrator-skill.git
+git clone https://github.com/mikewarrior/sdd-orchestrator-skill.git
 cd sdd-orchestrator-skill
 ./install.sh
 ```
@@ -51,13 +51,13 @@ cd sdd-orchestrator-skill
 ### Option 1: One-line Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mrueda/sdd-orchestrator-skill/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/mikewarrior/sdd-orchestrator-skill/main/install.sh | bash
 ```
 
 ### Option 2: Clone and Install
 
 ```bash
-git clone https://github.com/mrueda/sdd-orchestrator-skill.git
+git clone https://github.com/mikewarrior/sdd-orchestrator-skill.git
 cd sdd-orchestrator-skill
 ./install.sh
 ```
