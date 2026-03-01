@@ -1,0 +1,14 @@
+.idea/
+Session
+Session.vim
+Sessionx.vim
+
+db.sqlite3
+*.sqlite3
+
+# MacOs DS_Store
+*.DS_Store
+
+# AI Coding Assistants - OpenCode
+opencode.json
+sdd-configs.yaml

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "agent": {
+    "plan": {
+      "model": "your-provider/your-reasoning-model",
+      "description": "Spec/Architect agent - for sdd-spec, sdd-design, sdd-propose phases"
+    },
+    "build": {
+      "model": "your-provider/your-coding-model",
+      "description": "Implementer/Coder agent - for sdd-apply phase"
+    },
+    "explore": {
+      "model": "your-provider/your-analysis-model",
+      "description": "Reviewer/Quality Gate agent - for sdd-verify, sdd-explore phases"
+    },
+    "general": {
+      "model": "your-provider/your-general-model",
+      "description": "Lead/Orchestrator agent - for sdd-init, sdd-tasks, sdd-archive phases"
+    }
+  },
+  "default_agent": "build"
+}

@@ -1,0 +1,88 @@
+# SDD Agent Model Configuration Example
+# Copy this file to sdd-configs.yaml and customize for your needs
+#
+# This file configures which AI models are used for each SDD phase.
+# See AGENTS.md for details on the SDD workflow.
+#
+# Usage:
+#   ./configure-sdd.sh              # Interactive mode (select profile)
+#   ./configure-sdd.sh --list       # List available profiles
+#   ./configure-sdd.sh --config NAME # Apply profile NAME
+#
+# Supported settings per agent (when using object format):
+#   model       - Model identifier (required in object format)
+#   temperature - Sampling temperature (0.0-2.0)
+#   top_p       - Nucleus sampling threshold (0.0-1.0)
+#   steps       - Max agent iterations before text-only response
+#   maxSteps    - Deprecated, use steps
+#   mode        - "subagent" | "primary" | "all"
+#   variant     - Model variant (e.g., "thinking")
+#   prompt      - Custom system prompt
+#   color       - Hex color (#RRGGBB) or theme color (primary, secondary, etc.)
+#   disable     - Set to true to disable this agent
+#   hidden      - Hide from @ autocomplete
+#   options     - Additional provider options (object with arbitrary keys/values)
+
+configs:
+  # Cloud-based models (default)
+  # Best for most users with internet connectivity
+  - name: "cloud"
+    active: true
+    models:
+      plan: "opencode-go/minimax-m2.5"
+      build: "opencode-go/kimi-k2.5"
+      explore: "opencode-go/glm-5"
+      general: "opencode-go/glm-5"
+
+  # Local models with custom settings
+  # For users running models locally via Ollama, LM Studio, etc.
+  - name: "local"
+    active: false
+    models:
+      plan:
+        model: "local/nemotron3-nano"
+        temperature: 0.2
+        top_p: 0.9
+        steps: 3
+        mode: "primary"
+      build:
+        model: "local/devstral-small-2"
+        temperature: 0.2
+        top_p: 0.9
+        steps: 3
+        mode: "primary"
+      explore: "local/nanbeige4.1"
+      general: "local/nemotron3-nano"
+
+  # Fully configured example with all settings
+  # Uncomment to use or reference for your own configuration
+  # - name: "fully-configured"
+  #   active: false
+  #   models:
+  #     plan:
+  #       model: "anthropic/claude-sonnet-4-20250514"
+  #       temperature: 0.7
+  #       top_p: 0.9
+  #       steps: 10
+  #       mode: "primary"
+  #       color: "#FF5733"
+  #       prompt: "You are a careful architect. Focus on clear specifications."
+  #     build:
+  #       model: "openai/gpt-4.1"
+  #       variant: "thinking"
+  #       temperature: 0.3
+  #       steps: 5
+  #       mode: "primary"
+  #       options:
+  #         max_tokens: 4096
+  #         stop:
+  #           - "```"
+  #           - "User:"
+  #           - "Assistant:"
+  #     explore:
+  #       model: "opencode-go/glm-5"
+  #       steps: 3
+  #     general:
+  #       model: "opencode-go/glm-5"
+  #       steps: 5
+  #       hidden: false
