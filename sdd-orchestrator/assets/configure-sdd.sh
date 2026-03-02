@@ -229,7 +229,7 @@ verify_yaml() {
         else
             printf "${BLUE}Checking '$name'...${NC}\n"
             
-            for agent_type in plan build explore general; do
+            for agent_type in architect build explore general; do
                 local agent_kind
                 agent_kind=$(yq ".configs[$i].models.$agent_type | kind" "$SDD_CONFIGS_YAML" 2>/dev/null || echo "null")
                 
@@ -325,7 +325,7 @@ list_profiles() {
             printf "  $name\n"
         fi
         
-        for agent_type in plan build explore general; do
+        for agent_type in architect build explore general; do
             local agent_kind model_val
             agent_kind=$(yq ".configs[$i].models.$agent_type | kind" "$SDD_CONFIGS_YAML" 2>/dev/null || echo "null")
             
@@ -393,7 +393,7 @@ generate_config() {
     
     local first_agent=true
     
-    for agent_type in plan build explore general; do
+    for agent_type in architect build explore general; do
         local agent_kind model_val
         agent_kind=$(yq ".configs[$profile_idx].models.$agent_type | kind" "$SDD_CONFIGS_YAML" 2>/dev/null || echo "null")
         
@@ -410,7 +410,7 @@ generate_config() {
         
         local description=""
         case $agent_type in
-            plan)
+            architect)
                 description="Spec/Architect agent - for sdd-spec, sdd-design, sdd-propose phases"
                 ;;
             build)
@@ -484,7 +484,7 @@ generate_config() {
     echo ""
     printf "${BLUE}Models configured:${NC}\n"
     
-    for agent_type in plan build explore general; do
+    for agent_type in architect build explore general; do
         local model_val
         model_val=$(get_model_value "$profile_idx" "$agent_type")
         printf "  $agent_type: $model_val"
@@ -607,9 +607,9 @@ show_current_config() {
     echo "  ├─────────────────┼──────────────┼─────────────────────────────────────────────┤"
     echo "  │ sdd-init        │ general      │ Bootstrap project structure                 │"
     echo "  │ sdd-explore     │ explore      │ Investigate codebase and options            │"
-    echo "  │ sdd-propose     │ plan         │ Create change proposals                     │"
-    echo "  │ sdd-spec        │ plan         │ Write specifications                        │"
-    echo "  │ sdd-design      │ plan         │ Technical architecture                      │"
+    echo "  │ sdd-propose     │ architect    │ Create change proposals                     │"
+    echo "  │ sdd-spec        │ architect    │ Write specifications                        │"
+    echo "  │ sdd-design      │ architect    │ Technical architecture                      │"
     echo "  │ sdd-tasks       │ general      │ Break down implementation tasks             │"
     echo "  │ sdd-apply       │ build        │ Implement code                              │"
     echo "  │ sdd-verify      │ explore      │ Validate implementation                     │"

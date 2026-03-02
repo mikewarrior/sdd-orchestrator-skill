@@ -35,9 +35,9 @@ The SDD orchestrator must use specific agent types for each phase:
 |-----------|------------|--------|
 | `sdd-init` | `general` | Bootstrap and coordination |
 | `sdd-explore` | `explore` | Investigation and analysis |
-| `sdd-propose` | `plan` | Structured proposals |
-| `sdd-spec` | `plan` | Requirements and scenarios |
-| `sdd-design` | `plan` | Architecture decisions |
+| `sdd-propose` | `architect` | Structured proposals |
+| `sdd-spec` | `architect` | Requirements and scenarios |
+| `sdd-design` | `architect` | Architecture decisions |
 | `sdd-tasks` | `general` | Task breakdown |
 | `sdd-apply` | `build` | Code implementation |
 | `sdd-verify` | `explore` | Quality gate verification |
@@ -71,7 +71,7 @@ The skill path depends on installation:
 Running SDD phase?
 ├── sdd-init / sdd-tasks / sdd-archive → subagent_type: 'general'
 ├── sdd-explore / sdd-verify            → subagent_type: 'explore'
-├── sdd-propose / sdd-spec / sdd-design → subagent_type: 'plan'
+├── sdd-propose / sdd-spec / sdd-design → subagent_type: 'architect'
 └── sdd-apply                           → subagent_type: 'build'
 
 Need to configure models?
@@ -89,7 +89,7 @@ Need to configure models?
 ```javascript
 Task(
   description: 'spec for add-dark-mode',
-  subagent_type: 'plan',
+  subagent_type: 'architect',
   prompt: 'You are an SDD sub-agent. Read the skill file for sdd-spec FIRST, then follow its instructions exactly.
 
 CONTEXT:
@@ -137,7 +137,7 @@ configs:
   - name: "default"
     active: true
     models:
-      plan: "provider/model-id"
+      architect: "provider/model-id"
       build: "provider/model-id"
       explore: "provider/model-id"
       general: "provider/model-id"
@@ -145,7 +145,7 @@ configs:
   - name: "reasoning-heavy"
     active: false
     models:
-      plan:
+      architect:
         model: "provider/reasoning-model"
         temperature: 0.7
         steps: 15
@@ -156,7 +156,7 @@ configs:
 
 **Rules:**
 - Exactly one profile must have `active: true`
-- All four model keys (plan, build, explore, general) are required for each profile
+- All four model keys (architect, build, explore, general) are required for each profile
 - Profile names must be unique
 - Models can be strings or objects with settings
 

@@ -233,7 +233,7 @@ print_next_steps() {
         echo "     $target_dir/skill/sdd-orchestrator/assets/configure-sdd.sh"
         echo ""
         echo -e "  ${BOLD}3.${NC} In OpenCode, select the agent for each SDD phase:"
-        echo "     Press Tab → choose plan/build/explore/general"
+        echo "     Press Tab → choose architect/build/explore/general"
         echo ""
         echo -e "  ${BOLD}4.${NC} Start using SDD commands:"
         echo "     /sdd-init, /sdd-new, /sdd-apply, etc."

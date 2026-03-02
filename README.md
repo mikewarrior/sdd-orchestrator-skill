@@ -114,7 +114,7 @@ sdd-configs.yaml  →  configure-sdd.sh  →  opencode.json
 
 #### What It Does
 
-Defines multiple model profiles, each specifying which AI model to use for each agent type (plan, build, explore, general).
+Defines multiple model profiles, each specifying which AI model to use for each agent type (architect, build, explore, general).
 
 #### Structure
 
@@ -123,7 +123,7 @@ configs:
   - name: "profile-name"
     active: true/false
     models:
-      plan: "provider/model-id"      # For spec, design, propose phases
+      architect: "provider/model-id"      # For spec, design, propose phases
       build: "provider/model-id"     # For apply (implementation) phase
       explore: "provider/model-id"   # For explore, verify phases
       general: "provider/model-id"   # For init, tasks, archive phases
@@ -138,7 +138,7 @@ configs:
   - name: "cloud"
     active: true
     models:
-      plan: "opencode-go/minimax-m2.5"
+      architect: "opencode-go/minimax-m2.5"
       build: "opencode-go/kimi-k2.5"
       explore: "opencode-go/glm-5"
       general: "opencode-go/glm-5"
@@ -153,7 +153,7 @@ configs:
   - name: "local"
     active: false
     models:
-      plan:
+      architect:
         model: "local/nemotron3-nano"
         temperature: 0.2
         top_p: 0.9
@@ -191,7 +191,7 @@ configs:
   - name: "cloud"
     active: true
     models:
-      plan: "opencode-go/minimax-m2.5"
+      architect: "opencode-go/minimax-m2.5"
       build: "opencode-go/kimi-k2.5"
       explore: "opencode-go/glm-5"
       general: "opencode-go/glm-5"
@@ -200,7 +200,7 @@ configs:
   - name: "local"
     active: false
     models:
-      plan:
+      architect:
         model: "local/nemotron3-nano"
         temperature: 0.2
         steps: 10
@@ -215,7 +215,7 @@ configs:
   - name: "reasoning-heavy"
     active: false
     models:
-      plan:
+      architect:
         model: "anthropic/claude-sonnet-4-20250514"
         temperature: 0.7
         steps: 15
@@ -298,9 +298,9 @@ cd ~/.opencode/skill/sdd-orchestrator/assets
 |-----------|------------|---------------------|-----|
 | `sdd-init` | `general` | Fast, cheap | Bootstrap and coordination |
 | `sdd-explore` | `explore` | Balanced | Codebase investigation |
-| `sdd-propose` | `plan` | High reasoning | Structured proposals |
-| `sdd-spec` | `plan` | High reasoning | Requirements and scenarios |
-| `sdd-design` | `plan` | High reasoning | Architecture decisions |
+| `sdd-propose` | `architect` | High reasoning | Structured proposals |
+| `sdd-spec` | `architect` | High reasoning | Requirements and scenarios |
+| `sdd-design` | `architect` | High reasoning | Architecture decisions |
 | `sdd-tasks` | `general` | Fast, cheap | Task breakdown |
 | `sdd-apply` | `build` | Code-focused | Implementation |
 | `sdd-verify` | `explore` | Deterministic | Quality gate verification |
@@ -310,7 +310,7 @@ cd ~/.opencode/skill/sdd-orchestrator/assets
 
 ### Tips
 
-- **Cost optimization**: Use expensive reasoning models only for `plan` phase, cheaper models for `build` and `general`
+- **Cost optimization**: Use expensive reasoning models only for `architect` phase, cheaper models for `build` and `general`
 - **Local development**: Create a `local` profile with Ollama/LM Studio models for offline work
 - **Multiple profiles**: Keep several profiles (cloud/local/reasoning-heavy) and switch as needed
 - **Always verify**: Run `--verify` after editing YAML to catch syntax errors
@@ -348,7 +348,7 @@ This enables:
 ┌──────────────────────────────────────────────────────────┐
 │  AGENT TYPES (configured in opencode.json)               │
 │                                                          │
-│  plan     → High-reasoning model (specs, design)         │
+│  architect → High-reasoning model (specs, design)         │
 │  build    → Code-focused model (implementation)          │
 │  explore  → Review model (verification, analysis)        │
 │  general  → Coordinator model (init, tasks, archive)     │
@@ -366,7 +366,7 @@ configs:
   - name: "production"
     active: true
     models:
-      plan:
+      architect:
         model: "anthropic/claude-sonnet-4-20250514"
         temperature: 0.7
         steps: 15
@@ -390,7 +390,7 @@ configs:
   - name: "offline"
     active: false
     models:
-      plan: "local/llama3.1-70b"
+      architect: "local/llama3.1-70b"
       build: "local/codestral"
       explore: "local/llama3.1-70b"
       general: "local/llama3.1-8b"
