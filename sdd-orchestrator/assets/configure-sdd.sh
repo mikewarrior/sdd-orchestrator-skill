@@ -9,78 +9,17 @@
 #   ./configure-sdd.sh --config NAME      # Apply profile NAME
 #   ./configure-sdd.sh --set-active NAME  # Set profile as active
 #   ./configure-sdd.sh --copy-example     # Copy example YAML to sdd-configs.yaml
+#   ./configure-sdd.sh --config-path DIR  # Use custom config directory
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# ============================================================================
-# Configuration Location Detection
-# ============================================================================
+# Explicit config path (set via --config-path)
+EXPLICIT_CONFIG_PATH=""
 
-detect_config_location() {
-    # Check if running from project installation (./.opencode/)
-    local project_config="./.opencode"
-    local global_config="$HOME/.opencode"
-    
-    # Check if sdd-configs.yaml exists in project directory
-    if [ -f "$project_config/sdd-configs.yaml" ]; then
-        CONFIG_DIR="$(cd "$project_config" && pwd)"
-        return 0
-    fi
-    
-    # Check if running from global installation
-    if [[ "$SCRIPT_DIR" == *"$global_config"* ]]; then
-        CONFIG_DIR="$global_config"
-        return 0
-    fi
-    
-    # Check if running from project installation
-    if [[ "$SCRIPT_DIR" == *"/.opencode/"* ]]; then
-        # Extract the .opencode directory from script path
-        CONFIG_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
-        return 0
-    fi
-    
-    # Check if sdd-configs.yaml exists in global directory
-    if [ -f "$global_config/sdd-configs.yaml" ]; then
-        CONFIG_DIR="$global_config"
-        return 0
-    fi
-    
-    # Default to project directory if it exists, otherwise global
-    if [ -d "$project_config" ]; then
-        CONFIG_DIR="$(cd "$project_config" 2>/dev/null && pwd)" || echo "$global_config"
-    else
-        CONFIG_DIR="$global_config"
-    fi
-}
-
-# Initialize config location
-detect_config_location
-
-OPENCODE_JSON="$CONFIG_DIR/opencode.json"
-OPENCODE_EXAMPLE="$CONFIG_DIR/opencode.example.json"
-SDD_CONFIGS_YAML="$CONFIG_DIR/sdd-configs.yaml"
-SDD_CONFIGS_EXAMPLE="$CONFIG_DIR/sdd-configs.example.yaml"
-
-# Fallback: check for example files in script directory (for initial setup)
-if [ ! -f "$SDD_CONFIGS_EXAMPLE" ]; then
-    SCRIPT_EXAMPLE="$SCRIPT_DIR/../../../sdd-configs.example.yaml"
-    if [ -f "$SCRIPT_EXAMPLE" ]; then
-        SDD_CONFIGS_EXAMPLE="$SCRIPT_EXAMPLE"
-    fi
-fi
-
-if [ ! -f "$OPENCODE_EXAMPLE" ]; then
-    SCRIPT_OPENCODE_EXAMPLE="$SCRIPT_DIR/../../../opencode.example.json"
-    if [ -f "$SCRIPT_OPENCODE_EXAMPLE" ]; then
-        OPENCODE_EXAMPLE="$SCRIPT_OPENCODE_EXAMPLE"
-    fi
-fi
-
-# Color codes
+# Color codes (defined early for error messages)
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -88,10 +27,55 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Check for required tools
+# ============================================================================
+# Configuration Location Detection (Waterfall Priority)
+# ============================================================================
+
+detect_config_location() {
+    local project_config="./.opencode"
+    local global_config="$HOME/.opencode"
+    
+    # Priority 1: Explicit path from --config-path
+    if [ -n "$EXPLICIT_CONFIG_PATH" ]; then
+        if [ ! -d "$EXPLICIT_CONFIG_PATH" ]; then
+            printf "${RED}Error: Config path does not exist: $EXPLICIT_CONFIG_PATH${NC}\n"
+            exit 1
+        fi
+        CONFIG_DIR="$(cd "$EXPLICIT_CONFIG_PATH" && pwd)"
+        printf "${BLUE}Using explicit config path: $CONFIG_DIR${NC}\n"
+        return 0
+    fi
+    
+    # Priority 2: Project directory (./.opencode) with sdd-configs.yaml
+    if [ -f "$project_config/sdd-configs.yaml" ]; then
+        CONFIG_DIR="$(cd "$project_config" && pwd)"
+        return 0
+    fi
+    
+    # Priority 3: Global directory (~/.opencode) with sdd-configs.yaml
+    if [ -f "$global_config/sdd-configs.yaml" ]; then
+        CONFIG_DIR="$global_config"
+        return 0
+    fi
+    
+    # Fallback: Create in project if .opencode exists, else global
+    if [ -d "$project_config" ]; then
+        CONFIG_DIR="$(cd "$project_config" 2>/dev/null && pwd)" || CONFIG_DIR="$global_config"
+    else
+        CONFIG_DIR="$global_config"
+    fi
+}
+
+# Check for required tools early (before we need them)
 if ! command -v yq &> /dev/null; then
     printf "${RED}Error: yq is required but not installed.${NC}\n"
     echo "Install with: brew install yq (macOS) or apt-get install yq (Linux)"
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    printf "${RED}Error: jq is required but not installed.${NC}\n"
+    echo "Install with: brew install jq (macOS) or apt-get install jq (Linux)"
     exit 1
 fi
 
@@ -116,10 +100,23 @@ print_usage() {
     echo "  --config NAME      Apply profile NAME to opencode.json and set as active"
     echo "  --set-active NAME  Set profile NAME as active"
     echo "  --copy-example     Copy sdd-configs.example.yaml to sdd-configs.yaml"
+    echo "  --config-path DIR  Use custom config directory (overrides auto-detection)"
     echo "  --show             Show current opencode.json content"
     echo "  --help, -h         Show this help message"
     echo ""
     echo "Config location: $CONFIG_DIR"
+    echo ""
+    echo "Config Priority (waterfall):"
+    echo "  1. --config-path DIR (explicit override)"
+    echo "  2. ./.opencode/ (project directory)"
+    echo "  3. ~/.opencode/ (global directory)"
+    echo ""
+    echo "Merge Behavior:"
+    echo "  When applying a profile, SDD agents are MERGED into existing opencode.json:"
+    echo "  • Existing non-SDD agents are preserved"
+    echo "  • SDD agents (architect, build, explore, general) are updated"
+    echo "  • Other top-level keys remain unchanged"
+    echo "  • Backup created at opencode.json.bak before modification"
     echo ""
     echo "Examples:"
     echo "  # Interactive mode (select from available profiles)"
@@ -131,11 +128,54 @@ print_usage() {
     echo "  # Apply a specific profile"
     echo "  $0 --config cloud"
     echo ""
+    echo "  # Use custom config directory"
+    echo "  $0 --config-path /path/to/config --list"
+    echo ""
     echo "  # Copy example config and customize"
     echo "  $0 --copy-example"
     echo ""
     echo "  # Verify YAML configuration"
     echo "  $0 --verify"
+}
+
+# Backup existing opencode.json before modification
+backup_config() {
+    local config_file="$1"
+    if [ -f "$config_file" ]; then
+        local backup_file="${config_file}.bak"
+        cp "$config_file" "$backup_file"
+        printf "${BLUE}→ Backup created: $backup_file${NC}\n"
+    fi
+}
+
+# Merge SDD agents into existing opencode.json using jq
+# Usage: merge_agent_config <sdd_agents_json> <output_file>
+merge_agent_config() {
+    local sdd_agents_json="$1"
+    local output_file="$2"
+    
+    if [ -f "$OPENCODE_JSON" ]; then
+        local existing_json
+        existing_json=$(cat "$OPENCODE_JSON")
+        
+        local merged
+        merged=$(echo "$existing_json" | jq --argjson sdd "$sdd_agents_json" '
+            .agent = ((.agent // {}) * $sdd) |
+            .default_agent = "build"
+        ')
+        
+        echo "$merged" > "$output_file"
+        printf "${GREEN}✓ Merged SDD agents into existing configuration${NC}\n"
+    else
+        local merged
+        merged=$(echo "$sdd_agents_json" | jq '{
+            "$schema": "https://opencode.ai/config.json",
+            agent: .,
+            default_agent: "build"
+        }')
+        echo "$merged" > "$output_file"
+        printf "${GREEN}✓ Created new configuration with SDD agents${NC}\n"
+    fi
 }
 
 # Copy example config
@@ -363,7 +403,7 @@ list_profiles() {
     done
 }
 
-# Generate opencode.json from profile
+# Generate opencode.json from profile (with merge support)
 generate_config() {
     local profile_name=$1
     local configs_count
@@ -386,11 +426,8 @@ generate_config() {
         exit 1
     fi
     
-    local json_output
-    json_output="{\n"
-    json_output+='  "$schema": "https://opencode.ai/config.json",'"\n"
-    json_output+='  "agent": {'"\n"
-    
+    # Build SDD agents JSON object
+    local sdd_agents="{"
     local first_agent=true
     
     for agent_type in architect build explore general; do
@@ -427,11 +464,10 @@ generate_config() {
         if [ "$first_agent" = true ]; then
             first_agent=false
         else
-            json_output+=",""\n"
+            sdd_agents+=","
         fi
         
-        json_output+='    "'$agent_type'": {'"\n"
-        json_output+='      "model": "'$model_val'"'
+        sdd_agents+="\"$agent_type\":{\"model\":\"$model_val\""
         
         if [ "$agent_kind" = "map" ] || [ "$agent_kind" = "object" ]; then
             for setting in temperature top_p steps maxSteps variant prompt color disable hidden; do
@@ -440,14 +476,11 @@ generate_config() {
                 
                 if [ "$setting_val" != "null" ] && [ -n "$setting_val" ]; then
                     if [ "$setting_val" = "true" ] || [ "$setting_val" = "false" ]; then
-                        json_output+=",""\n"
-                        json_output+='      "'$setting'": '$setting_val
+                        sdd_agents+=",\"$setting\":$setting_val"
                     elif [[ "$setting_val" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
-                        json_output+=",""\n"
-                        json_output+='      "'$setting'": '$setting_val
+                        sdd_agents+=",\"$setting\":$setting_val"
                     else
-                        json_output+=",""\n"
-                        json_output+='      "'$setting'": "'$setting_val'"'
+                        sdd_agents+=",\"$setting\":\"$setting_val\""
                     fi
                 fi
             done
@@ -455,29 +488,26 @@ generate_config() {
             local mode_val
             mode_val=$(yq ".configs[$profile_idx].models.$agent_type.mode // null" "$SDD_CONFIGS_YAML")
             if [ "$mode_val" != "null" ] && [ -n "$mode_val" ]; then
-                json_output+=",""\n"
-                json_output+='      "mode": "'$mode_val'"'
+                sdd_agents+=",\"mode\":\"$mode_val\""
             fi
             
             local options_val
             options_val=$(yq -o=json ".configs[$profile_idx].models.$agent_type.options // null" "$SDD_CONFIGS_YAML" 2>/dev/null | tr -d '\n')
             if [ "$options_val" != "null" ] && [ -n "$options_val" ] && [ "$options_val" != "{}" ] && [ "$options_val" != "null" ]; then
-                json_output+=",""\n"
-                json_output+='      "options": '$options_val
+                sdd_agents+=",\"options\":$options_val"
             fi
         fi
         
-        json_output+=",""\n"
-        json_output+='      "description": "'$description'"'"\n"
-        json_output+='    }'
+        sdd_agents+=",\"description\":\"$description\"}"
     done
     
-    json_output+="\n"
-    json_output+='  },'"\n"
-    json_output+='  "default_agent": "build"'"\n"
-    json_output+="}"
+    sdd_agents+="}"
     
-    printf "%b" "$json_output" > "$OPENCODE_JSON"
+    # Backup existing config before merge
+    backup_config "$OPENCODE_JSON"
+    
+    # Merge SDD agents into existing config
+    merge_agent_config "$sdd_agents" "$OPENCODE_JSON"
     
     printf "${GREEN}✓ Configuration saved to: $OPENCODE_JSON${NC}\n"
     printf "  Profile: $profile_name\n"
@@ -618,6 +648,29 @@ show_current_config() {
     echo ""
 }
 
+# Initialize paths after config location is detected
+init_config_paths() {
+    OPENCODE_JSON="$CONFIG_DIR/opencode.json"
+    OPENCODE_EXAMPLE="$CONFIG_DIR/opencode.example.json"
+    SDD_CONFIGS_YAML="$CONFIG_DIR/sdd-configs.yaml"
+    SDD_CONFIGS_EXAMPLE="$CONFIG_DIR/sdd-configs.example.yaml"
+    
+    # Fallback: check for example files in script directory (for initial setup)
+    if [ ! -f "$SDD_CONFIGS_EXAMPLE" ]; then
+        SCRIPT_EXAMPLE="$SCRIPT_DIR/../../../sdd-configs.example.yaml"
+        if [ -f "$SCRIPT_EXAMPLE" ]; then
+            SDD_CONFIGS_EXAMPLE="$SCRIPT_EXAMPLE"
+        fi
+    fi
+    
+    if [ ! -f "$OPENCODE_EXAMPLE" ]; then
+        SCRIPT_OPENCODE_EXAMPLE="$SCRIPT_DIR/../../../opencode.example.json"
+        if [ -f "$SCRIPT_OPENCODE_EXAMPLE" ]; then
+            OPENCODE_EXAMPLE="$SCRIPT_OPENCODE_EXAMPLE"
+        fi
+    fi
+}
+
 # Interactive mode
 interactive_mode() {
     print_header
@@ -678,14 +731,43 @@ interactive_mode() {
     apply_profile "$selected_name"
 }
 
-# Main argument parsing
-if [ $# -eq 0 ]; then
-    interactive_mode
-    exit 0
-fi
+# ============================================================================
+# Main Entry Point
+# ============================================================================
 
+# Save original arguments for second pass
+ORIGINAL_ARGS=("$@")
+
+# Pre-parse --config-path if present (must be done before detect_config_location)
 while [ $# -gt 0 ]; do
     case $1 in
+        --config-path)
+            if [ -z "$2" ]; then
+                printf "${RED}Error: --config-path requires a directory path${NC}\n"
+                exit 1
+            fi
+            EXPLICIT_CONFIG_PATH="$2"
+            shift 2
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+# Now detect config location and initialize paths
+detect_config_location
+init_config_paths
+
+# Restore original arguments for second pass
+set -- "${ORIGINAL_ARGS[@]}"
+
+# Re-parse arguments for actual commands
+while [ $# -gt 0 ]; do
+    case $1 in
+        --config-path)
+            shift 2
+            ;;
         --list)
             list_profiles
             exit 0
@@ -722,11 +804,16 @@ while [ $# -gt 0 ]; do
             print_usage
             exit 0
             ;;
-        *)
+        -*)
             printf "${RED}Unknown option: $1${NC}\n"
             print_usage
             exit 1
             ;;
+        *)
+            shift
+            ;;
     esac
-    shift
 done
+
+# If no command was given, run interactive mode
+interactive_mode

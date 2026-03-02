@@ -117,6 +117,10 @@ check_dependencies() {
         missing+=("yq")
     fi
     
+    if ! command -v jq &> /dev/null; then
+        missing+=("jq")
+    fi
+    
     if [ ${#missing[@]} -gt 0 ]; then
         echo -e "${YELLOW}Missing dependencies:${NC}"
         for dep in "${missing[@]}"; do
@@ -124,9 +128,9 @@ check_dependencies() {
         done
         echo ""
         echo "Install with:"
-        echo "  macOS:   brew install yq"
-        echo "  Linux:   apt-get install yq or snap install yq"
-        echo "  Windows: choco install yq or scoop install yq"
+        echo "  macOS:   brew install yq jq"
+        echo "  Linux:   apt-get install yq jq or snap install yq jq"
+        echo "  Windows: choco install yq jq or scoop install yq jq"
         echo ""
         read -p "Continue anyway? (y/N): " continue_anyway
         if [[ ! "$continue_anyway" =~ ^[Yy]$ ]]; then

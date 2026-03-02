@@ -40,6 +40,11 @@ cd sdd-orchestrator-skill
   - Linux: `apt-get install yq` or `snap install yq`
   - Windows: `choco install yq` or `scoop install yq`
 
+- **jq** - JSON processor (required for config merge)
+  - macOS: `brew install jq`
+  - Linux: `apt-get install jq` or `snap install jq`
+  - Windows: `choco install jq` or `scoop install jq`
+
 - **agent-teams-lite** (recommended, optional)
   - Provides the base SDD skills this orchestrator coordinates
   - Install from: https://github.com/Gentleman-Programming/agent-teams-lite
@@ -244,8 +249,33 @@ Reads profiles from `sdd-configs.yaml` and generates/updates `opencode.json` wit
 | `./configure-sdd.sh --verify` | Validate YAML configuration |
 | `./configure-sdd.sh --config <name>` | Apply specific profile by name |
 | `./configure-sdd.sh --set-active <name>` | Set profile as active in YAML |
+| `./configure-sdd.sh --config-path <dir>` | Use custom config directory |
 | `./configure-sdd.sh --show` | Display current `opencode.json` |
 | `./configure-sdd.sh --copy-example` | Copy example YAML to `sdd-configs.yaml` |
+
+#### Config Location Priority
+
+The script uses a waterfall priority to determine the config directory:
+
+```
+1. --config-path DIR     (explicit override)
+2. ./.opencode/          (project directory)
+3. ~/.opencode/          (global directory)
+```
+
+The script checks for `sdd-configs.yaml` existence to validate a location. If no config exists, it falls back to creating in the project directory if `.opencode` exists, otherwise uses the global directory.
+
+#### Merge Behavior
+
+When applying a profile, the script **merges** SDD agents into your existing `opencode.json`:
+
+- ✅ **Preserves** existing non-SDD agents (your custom agents remain intact)
+- ✅ **Updates** SDD agents (architect, build, explore, general) with new settings
+- ✅ **Keeps** other top-level keys unchanged (custom settings, preferences)
+- ✅ **Sets** `default_agent` to "build" (SDD default)
+- ✅ **Creates** backup at `opencode.json.bak` before modification
+
+This non-destructive approach allows you to maintain custom agents and settings while updating SDD configurations.
 
 #### Common Workflows
 
@@ -276,6 +306,16 @@ cd ~/.opencode/skill/sdd-orchestrator/assets
 
 # Switch to "local" profile
 ./configure-sdd.sh --config local
+```
+
+**Use Custom Config Directory:**
+
+```bash
+# Apply profile from custom location
+./configure-sdd.sh --config-path /path/to/custom/config --config cloud
+
+# List profiles from custom location
+./configure-sdd.sh --config-path /path/to/custom/config --list
 ```
 
 **Validate Before Applying:**
