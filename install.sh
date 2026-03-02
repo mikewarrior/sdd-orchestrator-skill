@@ -169,7 +169,7 @@ create_backup() {
 
 install_skill() {
     local target_dir="$1"
-    local skill_target="$target_dir/skill/sdd-orchestrator"
+    local skill_target="$target_dir/skills/sdd-orchestrator"
     
     echo -e "${BLUE}Installing skill...${NC}"
     echo ""
@@ -230,7 +230,7 @@ print_next_steps() {
         echo "     $target_dir/sdd-configs.yaml"
         echo ""
         echo -e "  ${BOLD}2.${NC} Apply a profile:"
-        echo "     $target_dir/skill/sdd-orchestrator/assets/configure-sdd.sh"
+        echo "     $target_dir/skills/sdd-orchestrator/assets/configure-sdd.sh"
         echo ""
         echo -e "  ${BOLD}3.${NC} In OpenCode, select the agent for each SDD phase:"
         echo "     Press Tab → choose architect/build/explore/general"
@@ -242,7 +242,7 @@ print_next_steps() {
         echo "     $target_dir/sdd-configs.yaml"
         echo ""
         echo -e "  ${BOLD}2.${NC} Apply a profile:"
-        echo "     $target_dir/skill/sdd-orchestrator/assets/configure-sdd.sh"
+        echo "     $target_dir/skills/sdd-orchestrator/assets/configure-sdd.sh"
         echo ""
         echo -e "  ${BOLD}3.${NC} Start OpenCode in this project:"
         echo "     opencode ."
@@ -295,7 +295,7 @@ install_global() {
     
     mkdir -p "$target_dir"
     
-    check_agent_teams_lite "$target_dir/skill"
+    check_agent_teams_lite "$target_dir/skills"
     
     create_backup "$target_dir/opencode.json"
     
@@ -316,7 +316,7 @@ install_project() {
     
     mkdir -p "$target_dir"
     
-    check_agent_teams_lite "$target_dir/skill"
+    check_agent_teams_lite "$target_dir/skills"
     
     install_skill "$target_dir"
     install_configs "$target_dir"
@@ -384,7 +384,7 @@ non_interactive_install() {
             echo -e "Target: ${CYAN}$target_dir${NC}"
             echo ""
             mkdir -p "$target_dir"
-            check_agent_teams_lite "$target_dir/skill"
+            check_agent_teams_lite "$target_dir/skills"
             create_backup "$target_dir/opencode.json"
             install_skill "$target_dir"
             install_configs "$target_dir"
