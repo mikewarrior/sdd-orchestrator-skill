@@ -5,7 +5,7 @@ description: >
   Trigger: When starting SDD workflow, running SDD commands, or coordinating SDD phases.
 license: MIT
 metadata:
-  author: mrueda
+  author: mikewarrior
   version: "2.0"
   scope: [root]
   auto_invoke:
