@@ -95,7 +95,6 @@ Task(
 CONTEXT:
 - Project: /path/to/project
 - Change: add-dark-mode
-- Artifact store mode: engram
 
 TASK:
 Write delta specs for the add-dark-mode change.
